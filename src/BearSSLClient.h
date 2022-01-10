@@ -33,6 +33,10 @@
 #define BEAR_SSL_CLIENT_IBUF_SIZE 8192 + 85 + 325 - BEAR_SSL_CLIENT_OBUF_SIZE
 #endif
 
+#ifndef BEAR_SSL_CLIENT_CHAIN_SIZE
+#define BEAR_SSL_CLIENT_CHAIN_SIZE 3
+#endif
+
 #include <Arduino.h>
 #include <Client.h>
 
@@ -71,8 +75,16 @@ public:
 
   void setInsecure(SNI insecure) __attribute__((deprecated("INSECURE. DO NOT USE IN PRODUCTION")));
 
+  void setEccVrfy(br_ecdsa_vrfy vrfy);
+  void setEccSign(br_ecdsa_sign sign);
+
+  void setEccCert(br_x509_certificate cert);
+  void setEccChain(br_x509_certificate* chain, size_t chainLen);
+
   void setEccSlot(int ecc508KeySlot, const byte cert[], int certLength);
   void setEccSlot(int ecc508KeySlot, const char cert[]);
+  void setKey(const char key[], const char cert[]);
+  void setEccCertParent(const char cert[]);
 
   int errorCode();
 
@@ -81,6 +93,8 @@ private:
   static int clientRead(void *ctx, unsigned char *buf, size_t len);
   static int clientWrite(void *ctx, const unsigned char *buf, size_t len);
   static void clientAppendCert(void *ctx, const void *data, size_t len);
+  static void clientAppendKey(void *ctx, const void *data, size_t len);
+  static void parentAppendCert(void *ctx, const void *data, size_t len);
 
 private:
   Client* _client;
@@ -89,8 +103,13 @@ private:
 
   bool _noSNI;
 
+  br_ecdsa_vrfy _ecVrfy;
+  br_ecdsa_sign _ecSign;
+
   br_ec_private_key _ecKey;
-  br_x509_certificate _ecCert;
+  br_skey_decoder_context* _skeyDecoder;
+  br_x509_certificate _ecCert[BEAR_SSL_CLIENT_CHAIN_SIZE];
+  int _ecChainLen;
   bool _ecCertDynamic;
 
   br_ssl_client_context _sc;

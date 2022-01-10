@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Arduino SA. All rights reserved.
+ * Copyright (c) 2019 Arduino SA. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining 
  * a copy of this software and associated documentation files (the
@@ -22,30 +22,33 @@
  * SOFTWARE.
  */
 
-#ifndef _ARDUINO_BEAR_SSL_H_
-#define _ARDUINO_BEAR_SSL_H_
+#include "AES128.h"
 
-#if defined __has_include
-#  if __has_include (<ArduinoBearSSLConfig.h>)
-#    include <ArduinoBearSSLConfig.h>
-#  endif
-#endif
+AES128Class::AES128Class() :
+  EncryptionClass(AES128_BLOCK_SIZE, AES128_DIGEST_SIZE)
+{
+}
 
-#include "BearSSLClient.h"
-#include "SHA1.h"
+AES128Class::~AES128Class()
+{
+}
 
-class ArduinoBearSSLClass {
-public:
-  ArduinoBearSSLClass();
-  virtual ~ArduinoBearSSLClass();
+int AES128Class::runEncryption(uint8_t *key, size_t size, uint8_t *input, size_t block_size, uint8_t *iv)
+{
+  br_aes_ct_cbcenc_init(&cbcenc_ctx, key, size);
+  br_aes_ct_cbcenc_run(&cbcenc_ctx, iv, input, block_size); // block_size must be multiple of 16
 
-  unsigned long getTime();
-  void onGetTime(unsigned long(*)(void));
+  return 1;
+}
 
-private:
-  unsigned long (*_onGetTimeCallback)(void);
-};
+int AES128Class::runDecryption(uint8_t *key, size_t size, uint8_t *input, size_t block_size, uint8_t *iv)
+{
+  br_aes_ct_cbcdec_init(&cbcdec_ctx, key, size);
+  br_aes_ct_cbcdec_run(&cbcdec_ctx, iv, input, block_size); // block_size must be multiple of 16
 
-extern ArduinoBearSSLClass ArduinoBearSSL;
+  return 1;
+}
 
+#ifndef ARDUINO_ARCH_MEGAAVR
+AES128Class AES128;
 #endif

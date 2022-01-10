@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Arduino SA. All rights reserved.
+ * Copyright (c) 2019 Arduino SA. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining 
  * a copy of this software and associated documentation files (the
@@ -22,30 +22,38 @@
  * SOFTWARE.
  */
 
-#ifndef _ARDUINO_BEAR_SSL_H_
-#define _ARDUINO_BEAR_SSL_H_
+#include "MD5.h"
 
-#if defined __has_include
-#  if __has_include (<ArduinoBearSSLConfig.h>)
-#    include <ArduinoBearSSLConfig.h>
-#  endif
-#endif
+MD5Class::MD5Class() :
+  SHAClass(MD5_BLOCK_SIZE, MD5_DIGEST_SIZE)
+{
+}
 
-#include "BearSSLClient.h"
-#include "SHA1.h"
+MD5Class::~MD5Class()
+{
+}
 
-class ArduinoBearSSLClass {
-public:
-  ArduinoBearSSLClass();
-  virtual ~ArduinoBearSSLClass();
+int MD5Class::begin()
+{
+  br_md5_init(&_ctx);
 
-  unsigned long getTime();
-  void onGetTime(unsigned long(*)(void));
+  return 1;
+}
 
-private:
-  unsigned long (*_onGetTimeCallback)(void);
-};
+int MD5Class::update(const uint8_t *buffer, size_t size)
+{
+  br_md5_update(&_ctx, buffer, size);
 
-extern ArduinoBearSSLClass ArduinoBearSSL;
+  return 1;
+}
 
+int MD5Class::end(uint8_t *digest)
+{
+  br_md5_out(&_ctx, digest);
+
+  return 1;
+}
+
+#ifndef ARDUINO_ARCH_MEGAAVR
+MD5Class MD5;
 #endif
